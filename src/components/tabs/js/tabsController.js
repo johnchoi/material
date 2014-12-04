@@ -4,7 +4,7 @@
 angular.module('material.components.tabs')
   .controller('$mdTabs', MdTabsController);
 
-function MdTabsController($scope, $element, $mdUtil) {
+function MdTabsController($scope, $element, $mdUtil, $$rAF) {
 
   var tabsList = $mdUtil.iterator([], false);
   var self = this;
@@ -22,6 +22,7 @@ function MdTabsController($scope, $element, $mdUtil) {
   self.count = tabsList.count;
   
   self.selected = selected;
+  self.selectedIndex = selectedIndex;
   self.add = add;
   self.remove = remove;
   self.move = move;
@@ -39,15 +40,23 @@ function MdTabsController($scope, $element, $mdUtil) {
     }
   });
 
+  $scope.$watch(
+      $$rAF.debounce(function () { return $element.html(); }),
+      function () { $scope.$broadcast('$mdTabsChanged'); }
+  );
+
   // Get the selected tab
   function selected() {
     return self.itemAt($scope.selectedIndex);
   }
 
+  function selectedIndex() {
+    return $scope.selectedIndex;
+  }
+
   // Add a new tab.
   // Returns a method to remove the tab from the list.
   function add(tab, index) {
-
     tabsList.add(tab, index);
     tab.onAdd(self.contentArea);
 
@@ -57,6 +66,7 @@ function MdTabsController($scope, $element, $mdUtil) {
         $scope.selectedIndex === self.indexOf(tab)) {
       self.select(tab);
     }
+
     $scope.$broadcast('$mdTabsChanged');
   }
 
@@ -102,7 +112,7 @@ function MdTabsController($scope, $element, $mdUtil) {
   }
 
   function focus(tab) {
-    // this variable is $watch'd by pagination
+    // this variable is watched by pagination
     self.tabToFocus = tab;
   }
 

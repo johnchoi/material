@@ -53,7 +53,7 @@ angular.module('material.components.tabs')
  * </hljs>
  *
  */
-function MdTabDirective($mdInkRipple, $compile, $mdAria, $mdUtil, $mdConstant) {
+function MdTabDirective($mdInkRipple, $compile, $mdUtil, $mdConstant) {
   return {
     restrict: 'E',
     require: ['mdTab', '^mdTabs'],

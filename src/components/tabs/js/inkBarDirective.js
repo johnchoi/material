@@ -9,7 +9,9 @@
 angular.module('material.components.tabs')
   .directive('mdTabsInkBar', MdTabInkDirective);
 
-function MdTabInkDirective($mdConstant, $window, $$rAF, $timeout) {
+function MdTabInkDirective($$rAF) {
+
+  var lastIndex = 0;
 
   return {
     restrict: 'E',
@@ -18,40 +20,46 @@ function MdTabInkDirective($mdConstant, $window, $$rAF, $timeout) {
   };
 
   function postLink(scope, element, attr, ctrls) {
-    var nobar = ctrls[0],
+    var noBar = ctrls[0],
         tabsCtrl = ctrls[1],
-        timeout;
+        debouncedUpdateBar = $$rAF.debounce(updateBar);
 
-    if (nobar) return;
+    if (noBar) return;
 
     tabsCtrl.inkBarElement = element;
 
-    scope.$watch(tabsCtrl.selected, updateBar);
-    scope.$on('$mdTabsChanged', updateBar);
+    // We only need this watcher when pagination is disabled - otherwise, $mdTabsPagination will
+    // trigger the change for us.
+    scope.$watch(tabsCtrl.selectedIndex, debouncedUpdateBar);
+    scope.$on('$mdTabsPaginationChanged', debouncedUpdateBar);
 
     function updateBar() {
       var selected = tabsCtrl.selected();
+      var hideInkBar = !selected || tabsCtrl.count() < 2;
 
-      var hideInkBar = !selected || tabsCtrl.count() < 2 ||
-        (scope.pagination || {}).itemsPerPage === 1;
       element.css('display', hideInkBar ? 'none' : 'block');
 
-      if (!hideInkBar) {
-        var count = tabsCtrl.count();
-        var scale = 1 / count;
-        var left = tabsCtrl.indexOf(selected);
-        element.css($mdConstant.CSS.TRANSFORM, 'scaleX(' + scale + ') ' +
-                    'translate3d(' + left * 100 + '%,0,0)');
-        element.addClass('md-ink-bar-grow');
-        if (timeout) $timeout.cancel(timeout);
-        timeout = $timeout(function () {
-          element.removeClass('md-ink-bar-grow');
-        }, 250, false);
+      if (hideInkBar) return;
 
+      if (scope.pagination.tabData) {
+        var index = tabsCtrl.indexOf(selected);
+        var data = scope.pagination.tabData.tabs[index] || { left: 0, right: 0, width: 0 };
+        var right = element.parent().prop('offsetWidth') - data.right;
+
+        element.removeClass('md-transition-left md-transition-right md-no-transition');
+        if (lastIndex > index) {
+          element.addClass('md-transition-left');
+        } else if (lastIndex < index) {
+          element.addClass('md-transition-right');
+        } else {
+          element.addClass('md-no-transition');
+        }
+
+        element.css({ left: data.left + 'px', right: right + 'px' });
+
+        lastIndex = index;
       }
     }
-
   }
-
 }
 })();

@@ -90,9 +90,7 @@ function InkRippleService($window, $timeout) {
       scope.$watch(isActiveExpr, function watchActive(newValue) {
         isActive = newValue;
         if (isActive && !ripples.length) {
-          $timeout(function () {
-            createRipple(0, 0);
-          }, 0, false);
+          scope.$evalAsync(function () { createRipple(0, 0); });
         }
         angular.forEach(ripples, updateElement);
       });
@@ -196,7 +194,7 @@ function InkRippleService($window, $timeout) {
 
       state.animating = true;
 
-      $timeout(function () {
+      scope.$evalAsync(function () {
         if (options.dimBackground) {
           container.css({ backgroundColor: color });
         }
@@ -335,9 +333,9 @@ function InkRippleService($window, $timeout) {
         isHeld = false;
         index = ripples.length - 1;
         ripple = ripples[index];
-        $timeout(function () {
+        scope.$evalAsync(function () {
           updateElement(ripple);
-        }, 0, false);
+        });
       }
 
       /**
